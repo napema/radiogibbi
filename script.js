@@ -1,101 +1,98 @@
-var beatpack = [
-	{
-		name: "OFF Air",
-		artist: "Bones - Prod. Niq Venus",
-		src: "http://node-05.zeno.fm/rtmfhy308p8uv?rj-ttl=5&rj-tok=AAABePQSw8EAslzmJRbZE28k7A",
-		thumbnail: "url(https://upload.wikimedia.org/wikipedia/commons/c/c1/LP_Vinyl_Symbol_Icon.png)"
-	}
-];
-
 $(document).ready(function () {
-	var playing = false,
-		artistname = $(".artist-name"),
-		musicName = $(".music-name"),
-		time = $(".time"),
-		fillBar = $(".fillBar");
+    var audioElement = document.createElement('audio');
+    audioElement.setAttribute('src', $('.active-song').attr('data-src'));
 
-	var song = new Audio();
-	var CurrentSong = 0;
-	window.onload = load();
+    var tl = new TimelineMax();
+    tl.to('.player__albumImg', 3, {
+        rotation: '360deg',
+        repeat: -1,
+        ease: Power0.easeNone
+    }, '-=0.2');
+    tl.pause();
 
-	function load() {
-		artistname.html(beatpack[CurrentSong].name);
-		musicName.html(beatpack[CurrentSong].artist);
-		song.src = beatpack[CurrentSong].src;
-	}
+    $('.player__play').click(function () {
 
-	function playSong() {
-		artistname.html(beatpack[CurrentSong].name);
-		musicName.html(beatpack[CurrentSong].artist);
-		song.src = beatpack[CurrentSong].src;
-		song.play();
-		$("#thumbnail").css("background-image", beatpack[CurrentSong].thumbnail);
-		$("#play").addClass("fa-pause");
-		$("#play").removeClass("fa-play");
-		$("#thumbnail").addClass("active");
-		$(".player-track").addClass("active");
-	}
+        if ($('.player').hasClass('play')) {
+            $('.player').removeClass('play');
+            audioElement.pause();
+            TweenMax.to('.player__albumImg', 0.2, {
+                scale: 1,
+                ease: Power0.easeNone
+            })
+            tl.pause();
+        } else {
+            $('.player').addClass('play');
+            audioElement.play();
+            TweenMax.to('.player__albumImg', 0.2, {
+                scale: 1.1,
+                ease: Power0.easeNone
+            })
+            tl.resume();
+        }
 
-	song.addEventListener("timeupdate", function () {
-		var position = (100 / song.duration) * song.currentTime;
-		var current = song.currentTime;
-		var duration = song.duration;
-		var durationMinute = Math.floor(duration / 60);
-		var durationSecond = Math.floor(duration - durationMinute * 60);
-		var durationLabel = durationMinute + ":" + durationSecond;
-		currentSecond = Math.floor(current);
-		currentMinute = Math.floor(currentSecond / 60);
-		currentSecond = currentSecond - currentMinute * 60;
-		// currentSecond = (String(currentSecond).lenght > 1) ? currentSecond : ( String("0") + currentSecond );
-		if (currentSecond < 10) {
-			currentSecond = "0" + currentSecond;
-		}
-		var currentLabel = currentMinute + ":" + currentSecond;
-		var indicatorLabel = currentLabel + " / " + durationLabel;
+    });
 
-		fillBar.css("width", position + "%");
 
-		$(".time").html(indicatorLabel);
-	});
+    var playhead = document.getElementById("playhead");
+    audioElement.addEventListener("timeupdate", function () {
+        var duration = this.duration;
+        var currentTime = this.currentTime;
+        var percentage = (currentTime / duration) * 100;
+        playhead.style.width = percentage + '%';
+    });
 
-	$("#play").click(function playOrPause() {
-		if (song.paused) {
-			song.play();
-			playing = true;
-			$("#play").addClass("fa-pause");
-			$("#play").removeClass("fa-play");
-			$("#thumbnail").addClass("active");
-			$(".play-btn:before").css("padding-left", 300);
+    function updateInfo() {
+        $('.player__author').text($('.active-song').attr('data-author'));
+        $('.player__song').text($('.active-song').attr('data-song'));
+    }
+    updateInfo();
 
-			document.getElementsByClassName("play-btn")[0].classList.add("pause-btn");
-			document.getElementsByClassName("play-btn")[0].classList.remove("play-btn");
-		} else {
-			song.pause();
-			playing = false;
-			$("#play").removeClass("fa-pause");
-			$("#play").addClass("fa-play");
-			$("#thumbnail").removeClass("active");
+    $('.player__next').click(function () {
+        if ($('.player .player__albumImg.active-song').is(':last-child')) {
+            $('.player__albumImg.active-song').removeClass('active-song');
+            $('.player .player__albumImg:first-child').addClass('active-song');
+            audioElement.addEventListener("timeupdate", function () {
+                var duration = this.duration;
+                var currentTime = this.currentTime;
+                var percentage = (currentTime / duration) * 100;
+                playhead.style.width = percentage + '%';
+            });
+        } else {
+            $('.player__albumImg.active-song').removeClass('active-song').next().addClass('active-song');
+            audioElement.addEventListener("timeupdate", function () {
+                var duration = this.duration;
+                var currentTime = this.currentTime;
+                var percentage = (currentTime / duration) * 100;
+                playhead.style.width = percentage + '%';
+            });
+        }
+        updateInfo();
+        audioElement.setAttribute('src', $('.active-song').attr('data-src'));
+        audioElement.play();
+    });
 
-			document.getElementsByClassName("pause-btn")[0].classList.add("play-btn");
-			document
-				.getElementsByClassName("pause-btn")[0]
-				.classList.remove("pause-btn");
-		}
-	});
+    $('.player__prev').click(function () {
+        if ($('.player .player__albumImg.active-song').is(':first-child')) {
+            $('.player__albumImg.active-song').removeClass('active-song');
+            $('.player .player__albumImg:last-child').addClass('active-song');
+            audioElement.addEventListener("timeupdate", function () {
+                var duration = this.duration;
+                var currentTime = this.currentTime;
+                var percentage = (currentTime / duration) * 100;
+                playhead.style.width = percentage + '%';
+            });
+        } else {
+            $('.player__albumImg.active-song').removeClass('active-song').prev().addClass('active-song');
+            audioElement.addEventListener("timeupdate", function () {
+                var duration = this.duration;
+                var currentTime = this.currentTime;
+                var percentage = (currentTime / duration) * 100;
+                playhead.style.width = percentage + '%';
+            });
+        }
+        updateInfo();
+        audioElement.setAttribute('src', $('.active-song').attr('data-src'));
+        audioElement.play();
+    });
 
-	$("#prev").click(function prev() {
-		CurrentSong--;
-		if (CurrentSong < 0) {
-			CurrentSong = beatpack.length - 1;
-		}
-		playSong();
-	});
-
-	$("#next").click(function next() {
-		CurrentSong++;
-		if (CurrentSong == beatpack.length) {
-			CurrentSong = 0;
-		}
-		playSong();
-	});
 });
